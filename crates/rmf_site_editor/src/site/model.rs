@@ -27,10 +27,7 @@ use crate::{
 use bevy::{
     asset::{io::AssetReaderError, AssetLoadError},
     ecs::{
-        hierarchy::ChildOf,
-        relationship::DescendantIter,
-        schedule::ScheduleConfigs,
-        system::{EntityCommands, ScheduleSystem, SystemParam},
+        hierarchy::ChildOf, name, relationship::DescendantIter, schedule::ScheduleConfigs, system::{EntityCommands, ScheduleSystem, SystemParam}
     },
     gltf::Gltf,
     prelude::*,
@@ -66,6 +63,9 @@ pub struct PendingModel;
 pub fn get_all_for_source(source: &AssetSource) -> Vec<AssetSource> {
     match source {
         AssetSource::Search(ref name) => {
+
+            println!("Searching for {}", name);
+
             let split: SmallVec<[&str; 8]> = name.split('/').collect();
             let model_name = split.last().unwrap();
             let mut paths = common_model_directory_layouts(&name, model_name);
