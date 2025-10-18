@@ -32,7 +32,7 @@ use bevy::{
 };
 use rmf_site_egui::InspectFor;
 use rmf_site_format::{Edge, Path, Point};
-use rmf_site_picking::{Select, Selection};
+use rmf_site_picking::{MultiSelection, Select, Selection};
 use std::collections::HashSet;
 
 /// There are instances where Bevy panics if an entity that is computed to be
@@ -119,6 +119,7 @@ struct DeletionParams<'w, 's> {
     dependents: Query<'w, 's, &'static mut Dependents>,
     children: Query<'w, 's, &'static Children>,
     selection: Res<'w, Selection>,
+    multi_selection: Res<'w, MultiSelection>,
     current_level: ResMut<'w, CurrentLevel>,
     levels: Query<'w, 's, Entity, With<LevelElevation>>,
     select: EventWriter<'w, Select>,
@@ -309,7 +310,7 @@ fn cautious_delete(element: Entity, params: &mut DeletionParams) {
             }
         }
 
-        if **params.selection == Some(e) {
+        if **params.selection == Some(e) || !params.multi_selection.0.is_empty() {
             params.select.write(Select(None));
         }
     }
@@ -422,7 +423,7 @@ fn perform_deletions(all_to_delete: HashSet<Entity>, params: &mut DeletionParams
             }
         }
 
-        if **params.selection == Some(e) {
+        if **params.selection == Some(e) || !params.multi_selection.0.is_empty() {
             params.select.write(Select(None));
         }
 
