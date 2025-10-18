@@ -44,44 +44,32 @@ pub fn selection_update(
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
     if selection.0 != new_selection.map(|s| s.candidate) {
-        // If SHIFT is held down, we make use of the multi-selection feature which allows us to select
-        // multiple entities in the MultiSelection resource. We will then set the Selection resource to None.
-        if keyboard_input.pressed(KeyCode::ShiftLeft) {
-            if let Some(previous_selection) = selection.0 {
+        if let Some(previous_selection) = selection.0 {
+            if !keyboard_input.pressed(KeyCode::ShiftLeft) {
                 if let Ok(mut selected) = selected.get_mut(previous_selection) {
                     selected.is_selected = false;
                 }
             }
-            selection.0 = None;
-
-            if let Some(new_selection) = new_selection {
-                if let Ok(mut selected) = selected.get_mut(new_selection.candidate) {
-                    selected.is_selected = true;
-                }
-                multi_selection.0.insert(new_selection.candidate);
-            }
-        } else {
-            if let Some(previous_selection) = selection.0 {
-                if let Ok(mut selected) = selected.get_mut(previous_selection) {
-                    selected.is_selected = false;
-                }
-            }
-
-            if let Some(new_selection) = new_selection {
-                if let Ok(mut selected) = selected.get_mut(new_selection.candidate) {
-                    selected.is_selected = true;
-                }
-            }
-
-            selection.0 = new_selection.map(|s| s.candidate);
-
-            multi_selection.0.iter().for_each(|e| {
-                if let Ok(mut selected) = selected.get_mut(*e) {
-                    selected.is_selected = false;
-                }
-            });
-            multi_selection.0.clear();
         }
+
+        if let Some(new_selection) = new_selection {
+            if !keyboard_input.pressed(KeyCode::ShiftLeft) {
+                multi_selection.0.iter().for_each(|e| {
+                    if let Ok(mut selected) = selected.get_mut(*e) {
+                        selected.is_selected = false;
+                    }
+                });
+                multi_selection.0.clear();
+            }
+
+            if let Ok(mut selected) = selected.get_mut(new_selection.candidate) {
+                selected.is_selected = true;
+            }
+            multi_selection.0.insert(new_selection.candidate);
+        }
+
+        // Assign new selection
+        selection.0 = new_selection.map(|s| s.candidate);
     }
 }
 

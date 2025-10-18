@@ -78,10 +78,6 @@ fn handle_keyboard_input(
     {
         if let Some(selection) = selection.0 {
             delete.write(Delete::new(selection));
-        } else if !multi_selection.0.is_empty() {
-            multi_selection.0.iter().for_each(|e| {
-                delete.write(Delete::new(*e));
-            });
         } else {
             warn!("No selected entity to delete");
         }

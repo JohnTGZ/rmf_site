@@ -343,7 +343,7 @@ impl<'w, 's> WidgetSystem<Tile> for Inspector<'w, 's> {
 
                 if let Some(multi_selection) = world.get_resource::<MultiSelection>() {
                     // If multiple entities are selected, we skip showing the Inspect plugin.
-                    if !multi_selection.0.is_empty() {
+                    if multi_selection.0.len() > 1 {
                         ui.label("Using multi-selection of entities. Disabling Inspector widget.");
                         return;
                     }
