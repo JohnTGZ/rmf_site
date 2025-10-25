@@ -38,8 +38,8 @@ use bevy::{
     render::{mesh::VertexAttributeValues, view::RenderLayers},
     scene::SceneInstance,
 };
-use bevy_impulse::*;
 use bevy_mod_outline::{GenerateOutlineNormalsSettings, OutlineMeshExt};
+use crossflow::prelude::{DeliveryLabel, *};
 use rmf_site_camera::MODEL_PREVIEW_LAYER;
 use rmf_site_format::{
     Affiliation, AssetSource, Group, Inclusion, IssueKey, ModelInstance, ModelMarker,
@@ -173,7 +173,7 @@ fn load_asset_source(
                     return Err(ModelLoadingErrorKind::InvalidAssetSource(err.to_string()));
                 }
             };
-            asset_server
+            let handle = asset_server
                 .load_untyped_async(&asset_path)
                 .await
                 .map_err(|err| {
@@ -187,7 +187,15 @@ fn load_asset_source(
                         error!("Failed attempt to load asset with [{asset_path}]: {err}");
                     }
                     ModelLoadingErrorKind::AssetServerError(err.to_string())
+                })?;
+            asset_server
+                .wait_for_asset_untyped(&handle)
+                .await
+                .map_err(|err| {
+                    error!("Failed attempt to load asset with [{asset_path}]: {err}");
+                    ModelLoadingErrorKind::AssetServerError(err.to_string())
                 })
+                .map(|_| handle)
         }
     }
 }
@@ -479,7 +487,7 @@ impl<'w, 's> ModelLoader<'w, 's> {
         &mut self,
         parent: Entity,
         instance: ModelInstance<Entity>,
-        impulse: impl FnOnce(Impulse<InstanceSpawningResult, ()>),
+        impulse: impl FnOnce(Series<InstanceSpawningResult, ()>),
     ) -> EntityCommands<'_> {
         let affiliation = instance.description.clone();
         let id = self
@@ -504,19 +512,19 @@ impl<'w, 's> ModelLoader<'w, 's> {
     /// Run a basic workflow to update the asset source of an existing entity
     pub fn update_asset_source(&mut self, entity: Entity, source: AssetSource) {
         let interaction = DragPlaneBundle::new(entity, Vec3::Z);
-        self.update_asset_source_impulse(entity, source, Some(interaction))
+        self.update_asset_source_series(entity, source, Some(interaction))
             .detach();
     }
 
     /// Update an asset source and then keep attaching impulses to its outcome.
     /// Remember to call `.detach()` when finished or else the whole chain will be
     /// dropped right away.
-    pub fn update_asset_source_impulse(
+    pub fn update_asset_source_series(
         &mut self,
         entity: Entity,
         source: AssetSource,
         interaction: Option<DragPlaneBundle>,
-    ) -> Impulse<'w, 's, '_, ModelLoadingResult, ()> {
+    ) -> Series<'w, 's, '_, ModelLoadingResult, ()> {
         self.commands.request(
             ModelLoadingRequest::new(entity, source, interaction),
             self.services
@@ -539,7 +547,7 @@ impl<'w, 's> ModelLoader<'w, 's> {
         }
         let interaction = DragPlaneBundle::new(entity, Vec3::Z);
         for e in instance_entities.iter() {
-            self.update_asset_source_impulse(*e, source.clone(), Some(interaction.clone()))
+            self.update_asset_source_series(*e, source.clone(), Some(interaction.clone()))
                 .detach();
         }
     }
@@ -603,7 +611,7 @@ impl ModelLoadingServices {
         )
         .add_systems(
             PostUpdate,
-            (ApplyDeferred, flush_impulses()).in_set(ModelLoadingSet::CheckSceneFlush),
+            (ApplyDeferred, flush_execution()).in_set(ModelLoadingSet::CheckSceneFlush),
         );
         let check_scene_is_spawned = app.spawn_continuous_service(
             PostUpdate,
