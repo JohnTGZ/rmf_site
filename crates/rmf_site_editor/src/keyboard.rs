@@ -23,7 +23,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_egui::EguiContexts;
 use crossflow::*;
 use rmf_site_camera::resources::ProjectionMode;
-use rmf_site_picking::{MultiSelection, Selection};
+use rmf_site_picking::Selection;
 
 /// plugin for managing input settings for rmf_site_editor
 pub struct EditorInputPlugin;
@@ -38,7 +38,6 @@ impl Plugin for EditorInputPlugin {
 fn handle_keyboard_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     selection: Res<Selection>,
-    multi_selection: Res<MultiSelection>,
     mut egui_context: EguiContexts,
     mut delete: EventWriter<Delete>,
     mut new_workspace: EventWriter<CreateNewWorkspace>,
@@ -76,8 +75,8 @@ fn handle_keyboard_input(
     if keyboard_input.just_pressed(KeyCode::Delete)
         || keyboard_input.just_pressed(KeyCode::Backspace)
     {
-        if !multi_selection.0.is_empty() {
-            multi_selection.0.iter().for_each(|e| {
+        if !selection.selected.is_empty() {
+            selection.selected.iter().for_each(|e| {
                 delete.write(Delete::new(*e));
             });
         } else {

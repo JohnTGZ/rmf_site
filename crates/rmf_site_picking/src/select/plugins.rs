@@ -58,7 +58,6 @@ where
         .add_plugins(PickingRMFPlugin)
         .init_resource::<SelectionBlockers>()
         .init_resource::<Selection>()
-        .init_resource::<MultiSelection>()
         .init_resource::<Hovering>()
         .add_event::<DoubleClickSelect>()
         .add_event::<Select>()
@@ -159,5 +158,9 @@ impl Plugin for InspectorServicePlugin {
         });
         app.world_mut()
             .insert_resource(InspectorService(inspector_service));
+        app.world_mut().insert_resource(InspectionSettings {
+            multi_select: false,
+        });
+        app.add_systems(Update, multi_select_on_shift);
     }
 }
