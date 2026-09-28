@@ -69,7 +69,7 @@ bevy_egui = { version = "0.34", default-features = false }
 bevy-inspector-egui = "0.31"
 crossflow = "0.0.2"
 float_eq = "1.0"
-wasm-bindgen = "=0.2.100" # Remember to update the README if we change this version number
+wasm-bindgen = "=0.2.129" # Remember to update the README if we change this version number
 console_error_panic_hook = "0.1.7"
 getrandom = { version = "0.3.3"}
 clap = { version = "4.0.10" }
